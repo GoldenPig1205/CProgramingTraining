@@ -1,0 +1,57 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "C: 빌드 폴더 준비",
+            "type": "process",
+            "command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "New-Item -ItemType Directory -Force -Path 'C:\\GoldenPig1205\\School\\1-2\\.c-debug' | Out-Null"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "never",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "C: 현재 파일 빌드",
+            "type": "cppbuild",
+            "command": "C:\\Users\\pkj73\\mingw64\\bin\\gcc.exe",
+            "args": [
+                "-std=c17",
+                "-Wall",
+                "-Wextra",
+                "-g3",
+                "-O0",
+                "-fdiagnostics-color=always",
+                "-fdebug-prefix-map=${workspaceFolder}=C:\\c-source",
+                "${file}",
+                "-o",
+                "C:\\GoldenPig1205\\School\\1-2\\.c-debug\\current.exe"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "dependsOn": "C: 빌드 폴더 준비",
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "dedicated",
+                "clear": true
+            },
+            "detail": "현재 열려 있는 C 파일을 공용 디버그 실행 파일로 빌드합니다."
+        }
+    ]
+}
