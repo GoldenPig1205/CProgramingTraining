@@ -5,7 +5,7 @@
             "name": "C: 현재 파일 빌드 및 디버그",
             "type": "cppdbg",
             "request": "launch",
-            "program": "C:\\GoldenPig1205\\School\\1-2\\.c-debug\\current.exe",
+            "program": "C:\\GoldenPig1205\\School\\1-2\\.c-debug\\${fileBasenameNoExtension}.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "C:\\GoldenPig1205\\School\\1-2\\.c-debug",
@@ -13,9 +13,6 @@
             "externalConsole": false,
             "MIMode": "gdb",
             "miDebuggerPath": "C:\\Users\\pkj73\\mingw64\\bin\\gdb.exe",
-            "sourceFileMap": {
-                "C:\\c-source": "${workspaceFolder}"
-            },
             "setupCommands": [
                 {
                     "description": "GDB의 보기 좋은 변수 표시를 사용합니다.",

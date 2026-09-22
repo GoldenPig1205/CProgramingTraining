@@ -30,7 +30,7 @@
                 "-fdebug-prefix-map=${workspaceFolder}=C:\\c-source",
                 "${file}",
                 "-o",
-                "C:\\GoldenPig1205\\School\\1-2\\.c-debug\\current.exe"
+                "C:\\GoldenPig1205\\School\\1-2\\.c-debug\\${fileBasenameNoExtension}.exe"
             ],
             "options": {
                 "cwd": "${fileDirname}"
