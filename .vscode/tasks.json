@@ -27,10 +27,9 @@
                 "-g3",
                 "-O0",
                 "-fdiagnostics-color=always",
-                "-fdebug-prefix-map=${workspaceFolder}=C:\\c-source",
                 "${file}",
                 "-o",
-                "C:\\GoldenPig1205\\School\\1-2\\.c-debug\\${fileBasenameNoExtension}.exe"
+                "C:\\GoldenPig1205\\School\\1-2\\.c-debug\\current.exe"
             ],
             "options": {
                 "cwd": "${fileDirname}"

@@ -5,7 +5,7 @@
             "name": "C: 현재 파일 빌드 및 디버그",
             "type": "cppdbg",
             "request": "launch",
-            "program": "C:\\GoldenPig1205\\School\\1-2\\.c-debug\\${fileBasenameNoExtension}.exe",
+            "program": "C:\\GoldenPig1205\\School\\1-2\\.c-debug\\current.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "C:\\GoldenPig1205\\School\\1-2\\.c-debug",
