@@ -1,0 +1,13 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+
+int main(void)
+{
+    int score;
+    while (scanf("%d", &score) == 1) {
+        if (score < 0 || score > 100) break;
+        if (score >= 80) printf("Pass\n");
+        else printf("Fail\n");
+    }
+    return 0;
+}
