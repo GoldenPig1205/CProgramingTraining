@@ -90,9 +90,9 @@
                 <p id="status" role="status">좌표를 불러오는 중…</p>
             </div>
             <ul class="legend" aria-label="속도 범례 (km/h)">
-                <li class="slow">저속 &lt; 10</li>
+                <li class="slow">도보 · 저속 &lt; 10</li>
                 <li class="medium">중속 10–20</li>
-                <li class="fast">고속 &gt; 20 km/h</li>
+                <li class="fast">버스 · 고속 &gt; 20 km/h</li>
             </ul>
         </header>
         <div id="map" aria-label="GPS 이동 경로 지도"></div>
@@ -108,6 +108,21 @@
             if (speed < 10) return styles.getPropertyValue("--slow").trim();
             if (speed <= 20) return styles.getPropertyValue("--medium").trim();
             return styles.getPropertyValue("--fast").trim();
+        }
+
+        function drawRoute(map, points, locations) {
+            let color = speedColor(points[0].speed);
+            let segment = [locations[0]];
+
+            for (let index = 1; index < locations.length; index++) {
+                segment.push(locations[index]);
+                const nextColor = speedColor(points[index].speed);
+                if (color !== nextColor || index === locations.length - 1) {
+                    L.polyline(segment, {color, weight: 5}).addTo(map);
+                    segment = [locations[index]];
+                    color = nextColor;
+                }
+            }
         }
 
         async function showRoute() {
@@ -137,19 +152,34 @@
                 maxZoom: 19,
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
-            const route = L.polyline(locations, {color: "#174b70", weight: 4}).addTo(map);
-            map.fitBounds(route.getBounds(), {padding: [28, 28], maxZoom: 16});
+            drawRoute(map, points, locations);
+
+            function fitRoute() {
+                map.invalidateSize({pan: false});
+                map.fitBounds(locations, {padding: [36, 36], maxZoom: 16, animate: false});
+            }
+
+            fitRoute();
+            new ResizeObserver(fitRoute).observe(map.getContainer());
 
             points.forEach((point, index) => {
                 const popup = document.createElement("span");
-                popup.textContent = (index + 1) + "번 지점 · " + point.speed + " km/h";
-                L.circleMarker(locations[index], {
-                    radius: 6,
+                const name = point.label || (index + 1) + "번 지점";
+                popup.textContent = name + " · 예시 속도 " + point.speed + " km/h";
+                const marker = L.circleMarker(locations[index], {
+                    radius: point.label ? 7 : 3,
                     color: "#fff",
-                    weight: 2,
+                    weight: point.label ? 2 : 1,
                     fillColor: speedColor(point.speed),
                     fillOpacity: 1
                 }).addTo(map).bindPopup(popup);
+
+                if (point.label) {
+                    const label = document.createElement("span");
+                    label.textContent = point.label;
+                    const direction = index === 0 ? "bottom" : "top";
+                    marker.bindTooltip(label, {permanent: true, direction, offset: [0, direction === "top" ? -8 : 8]});
+                }
             });
 
             status.textContent = points.length + "개 좌표";

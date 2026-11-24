@@ -12,7 +12,8 @@ static char *skip_spaces(char *text)
     return text;
 }
 
-static int read_point(char *line, double *latitude, double *longitude, long *speed)
+static int read_point(char *line, double *latitude, double *longitude,
+                      long *speed, char **label)
 {
     char *end;
     *latitude = strtod(line, &end);
@@ -43,7 +44,37 @@ static int read_point(char *line, double *latitude, double *longitude, long *spe
     line++;
     errno = 0;
     *speed = strtol(line, &end, 10);
-    return line != end && errno != ERANGE && *speed >= 0 && *skip_spaces(end) == '\0';
+    if (line == end || errno == ERANGE || *speed < 0)
+        return 0;
+
+    end = skip_spaces(end);
+    *label = NULL;
+    if (*end == '\0')
+        return 1;
+    if (*end != ',')
+        return 0;
+
+    *label = skip_spaces(end + 1);
+    end = *label + strlen(*label);
+    while (end > *label && isspace((unsigned char)end[-1]))
+        end--;
+    *end = '\0';
+    return **label != '\0';
+}
+
+static void write_label(FILE *json, const char *label)
+{
+    fputs(", \"label\": \"", json);
+    for (const unsigned char *ch = (const unsigned char *)label; *ch != '\0'; ch++) {
+        if (*ch < 32)
+            fprintf(json, "\\u%04x", (unsigned int)*ch);
+        else {
+            if (*ch == '"' || *ch == '\\')
+                fputc('\\', json);
+            fputc(*ch, json);
+        }
+    }
+    fputc('"', json);
 }
 
 int main(void)
@@ -69,6 +100,7 @@ int main(void)
     while (fgets(line, sizeof line, csv) != NULL) {
         double latitude, longitude;
         long speed;
+        char *label;
         line_number++;
 
         if (strlen(line) == sizeof line - 1 && strchr(line, '\n') == NULL) {
@@ -82,7 +114,7 @@ int main(void)
         if (*skip_spaces(line) == '\0')
             continue;
 
-        if (!read_point(line, &latitude, &longitude, &speed)) {
+        if (!read_point(line, &latitude, &longitude, &speed, &label)) {
             fprintf(stderr, "Skipping line %zu: invalid GPS data.\n", line_number);
             continue;
         }
@@ -90,8 +122,11 @@ int main(void)
         if (count > 0)
             fputs(",", json);
         fprintf(json, "\n  {\"latitude\": %.6f, \"longitude\": %.6f, "
-                      "\"speed\": %ld, \"info\": \"Speed = %ld\"}",
+                      "\"speed\": %ld, \"info\": \"Speed = %ld\"",
                 latitude, longitude, speed, speed);
+        if (label != NULL)
+            write_label(json, label);
+        fputc('}', json);
         count++;
     }
 
