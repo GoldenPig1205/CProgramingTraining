@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GPS 이동 경로</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+    <style>
+        :root {
+            --slow: #14804a;
+            --medium: #c56908;
+            --fast: #cc3939;
+        }
+
+        body {
+            margin: 0;
+            background: #f2f5f7;
+            color: #172d3a;
+            font-family: "Malgun Gothic", system-ui, sans-serif;
+        }
+
+        main {
+            width: min(1120px, calc(100% - 36px));
+            margin: 44px auto;
+        }
+
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: end;
+            justify-content: space-between;
+            gap: 12px 28px;
+            margin-bottom: 18px;
+        }
+
+        h1 {
+            margin: 0 0 6px;
+            font-size: clamp(1.6rem, 4vw, 2.5rem);
+            letter-spacing: -0.06em;
+        }
+
+        #status {
+            margin: 0;
+            color: #4b6372;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px 16px;
+            padding: 10px 14px;
+            margin: 0;
+            border: 1px solid #d6e0e5;
+            border-radius: 12px;
+            background: #fff;
+            list-style: none;
+            font-size: 0.875rem;
+        }
+
+        .legend li::before {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            margin-right: 6px;
+            border-radius: 50%;
+            background: var(--marker-color);
+            content: "";
+        }
+
+        .slow { --marker-color: var(--slow); }
+        .medium { --marker-color: var(--medium); }
+        .fast { --marker-color: var(--fast); }
+
+        #map {
+            height: clamp(360px, 68vh, 720px);
+            overflow: hidden;
+            border: 1px solid #c6d4dc;
+            border-radius: 16px;
+            background: #e1e8eb;
+            box-shadow: 0 8px 20px #233d4b13;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <div>
+                <h1>GPS 이동 경로</h1>
+                <p id="status" role="status">좌표를 불러오는 중…</p>
+            </div>
+            <ul class="legend" aria-label="속도 범례 (km/h)">
+                <li class="slow">저속 &lt; 10</li>
+                <li class="medium">중속 10–20</li>
+                <li class="fast">고속 &gt; 20 km/h</li>
+            </ul>
+        </header>
+        <div id="map" aria-label="GPS 이동 경로 지도"></div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+    <script>
+        const status = document.querySelector("#status");
+        const styles = getComputedStyle(document.documentElement);
+
+        function speedColor(speed) {
+            if (speed < 10) return styles.getPropertyValue("--slow").trim();
+            if (speed <= 20) return styles.getPropertyValue("--medium").trim();
+            return styles.getPropertyValue("--fast").trim();
+        }
+
+        async function showRoute() {
+            if (typeof L === "undefined") {
+                status.textContent = "지도 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하세요.";
+                return;
+            }
+
+            let points;
+            try {
+                const response = await fetch("output.json", {cache: "no-store"});
+                if (!response.ok) throw new Error(response.status);
+                points = await response.json();
+            } catch (error) {
+                status.textContent = "output.json을 읽을 수 없습니다. 변환 프로그램과 로컬 서버를 확인하세요.";
+                return;
+            }
+
+            if (points.length === 0) {
+                status.textContent = "표시할 GPS 좌표가 없습니다.";
+                return;
+            }
+
+            const locations = points.map(point => [point.latitude, point.longitude]);
+            const map = L.map("map");
+            L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            const route = L.polyline(locations, {color: "#174b70", weight: 4}).addTo(map);
+            map.fitBounds(route.getBounds(), {padding: [28, 28], maxZoom: 16});
+
+            points.forEach((point, index) => {
+                const popup = document.createElement("span");
+                popup.textContent = (index + 1) + "번 지점 · " + point.speed + " km/h";
+                L.circleMarker(locations[index], {
+                    radius: 6,
+                    color: "#fff",
+                    weight: 2,
+                    fillColor: speedColor(point.speed),
+                    fillOpacity: 1
+                }).addTo(map).bindPopup(popup);
+            });
+
+            status.textContent = points.length + "개 좌표";
+        }
+
+        showRoute();
+    </script>
+</body>
+</html>
